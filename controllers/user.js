@@ -2,6 +2,9 @@ const express=require("express");
 const app=express();
 const User=require("../models/user")
 const bcrypt=require("bcrypt")
+const {verifyToken}=require("../Middlewares/auth")
+const jwt=require("jsonwebtoken")
+const fs=require("fs")
 
 /* Get all users */
 app.get("/",(req,res)=>{
@@ -13,7 +16,7 @@ app.get("/",(req,res)=>{
     })
 })
 /*Found one user per id*/
-app.get("/:id",(req,res)=>{
+app.get("/user/:id",(req,res)=>{
     let {id}=req.params
     User.findById(id,(err,userFound)=>{
         if(err){
@@ -41,6 +44,7 @@ app.post("/register",(req,res)=>{
             user.password=encrypted;
             user.role=body.role;
             user.save((err,userStored)=>{
+                
                 if(err){
                     return res.status(500).json({ok:true,message:"An error with the server had occured"})
                 }
@@ -54,7 +58,32 @@ app.post("/register",(req,res)=>{
 })
 /*LogIn users*/
 app.get("/login",(req,res)=>{
-    /*TODO logIn users*/
+    const {body}=req;
+    User.findOne({email:body.email},(err,userFound)=>{
+        if(err){
+            return res.status(500).json({ok:false,message:"An error with the server had occured"})
+        }
+        if(!userFound){
+            return res.status(400).json({ok:false,message:"Password or email are incorrect"})
+        }
+        const user={
+            name:body.name,
+            nickname:body.nickname,
+            email:body.email
+        }
+        bcrypt.compare(body.password,userFound.password,(err,matched)=>{
+            if(matched){
+               const privateKey=fs.readFileSync("Middlewares/private.key","utf8")
+               const token=jwt.sign(user,privateKey,{expiresIn:"48h"})
+               res.status(200).json({ok:true,message:token}) 
+            }
+            if(err){
+                res.status(500).json({ok:true,message:"An error with the server had occured"})
+            }
+            res.status(400).json({ok:false,message:"Password was wrong"})
+
+        })
+    })
 })
 
 module.exports=app
