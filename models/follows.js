@@ -11,7 +11,7 @@ const followsSchema=new Schema({
         ref:"User"
     },
     createdAt:{
-        type:String
+        type:Number
     }
 })
 

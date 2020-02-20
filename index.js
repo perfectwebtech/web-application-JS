@@ -10,6 +10,10 @@ const bodyParser=require("body-parser")
 const mongoose=require("mongoose")
 
 /*Middlewares*/
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useFindAndModify', false);
+mongoose.set('useCreateIndex', true);
+mongoose.set('useUnifiedTopology', true);
 app.use(bodyParser.urlencoded({extended:false}))
 app.use(bodyParser.json())
 app.use("/api",user_routes)

@@ -23,6 +23,14 @@ const UserSchema=new Schema({
     role:{
         type:String,
         default:"USER"
+    },
+    google:{
+        type:Boolean,
+        default:false
+    },
+    state:{
+        type:String,
+        default:"ACTIVE"
     }
 })
 
