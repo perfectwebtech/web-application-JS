@@ -6,6 +6,8 @@ const {verifyToken,roleAuth}=require("../Middlewares/auth")
 const jwt=require("jsonwebtoken")
 const fs=require("fs")
 const _=require("underscore")
+const {OAuth2Client} = require('google-auth-library');
+var generate=require("generate-password")
 
 /* Get all users and paginate from query params*/
 app.get("/users",verifyToken,(req,res)=>{
@@ -66,7 +68,7 @@ app.post("/register",(req,res)=>{
 /*LogIn users*/
 app.post("/login",(req,res)=>{
     const {body}=req;
-    User.findOne({email:body.email},(err,userFound)=>{
+    User.findOne({email:body.email,google:false},(err,userFound)=>{
         if(err){
             return res.status(500).json({ok:false,message:"An error with the server had occured"})
         }
@@ -138,6 +140,71 @@ app.delete("/:id",verifyToken,(req,res)=>{
     }else{
         return res.status(400).json({ok:true,message:"Data not specified or wrong"})
     }
+})
+async function verify(token) {
+    const credentials=fs.readFileSync("Middlewares/credentials.json","utf8")
+    const parsedClient=JSON.parse(credentials);
+    const client_id=parsedClient.web.client_id;
+    const client = new OAuth2Client(client_id);
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: client_id
+    });
+    const payload = ticket.getPayload();
+    return payload
+}
+/*Google Sign In*/
+app.post("/google-sign",(req,res)=>{
+    const {body}=req;
+    verify(body.idtoken).then((data)=>{
+       User.findOne({email:data.email},(err,userFound)=>{
+           console.log(userFound)
+            if(userFound==null){
+                const password_generated=generate.generate({
+                    length:8,
+                    numbers:true
+                })
+                const passwordEncrypted=bcrypt.hashSync(password_generated,10)
+                const user=new User()
+                    user.name=data.given_name,
+                    user.nickname=data.name,
+                    user.email=data.email,
+                    user.image=data.picture,
+                    user.role="USER",
+                    user.state="ACTIVE",
+                    user.google=true,
+                    user.password=passwordEncrypted
+    
+                user.save((err,userStored)=>{
+                    return res.json({ok:true,userStored})
+                })
+            }else{
+                if(userFound.google){
+                    const privateKey=fs.readFileSync("Middlewares/private.key","utf8")
+                    const user={
+                        name:userFound.name,
+                        nickname:userFound.nickname,
+                        email:userFound.email,
+                        _id:userFound._id,
+                        image:userFound.image,
+                        role:userFound.role,
+                        state:userFound.state,
+                        google:userFound.google
+                    }
+                    jwt.sign(user,privateKey,(err,token)=>{
+                        if(err){
+                            return res.status(500).json({ok:false,message:"Something went wrong"})
+                        }
+                        return res.status(200).json({ok:true,token})
+                    })
+                }else{
+                    return res.status(400).json({ok:false,message:"There is a user registered with that email"})
+                }
+            }    
+       })
+    }).catch((err)=>{
+        console.log(err)
+    }) 
 })
 
 
