@@ -2,3 +2,4 @@ node_modules
 Middlewares/private.key
 Middlewares/config.env
 Middlewares/credentials.json
+uploads/

@@ -2,13 +2,14 @@ const express = require('express');
 const app = express();
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
-const { verifyToken, roleAuth } = require('../Middlewares/auth');
+const { verifyToken, roleAuth, verify } = require('../Middlewares/auth');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const _ = require('underscore');
 const { OAuth2Client } = require('google-auth-library');
 const generate = require('generate-password');
 const hat = require('hat');
+const { manageImg } = require('../Middlewares/utils');
 
 /* Get all users and paginate from query params*/
 app.get('/users', verifyToken, (req, res) => {
@@ -53,7 +54,7 @@ app.post('/register', (req, res) => {
             const user = new User();
             user.password = encrypted;
             user.email = body.email;
-            user.image = body.image || null;
+            user.image = 'default.png';
             user.nickname = body.nickname;
             user.name = body.name;
             user.role = 'USER';
@@ -212,18 +213,7 @@ app.delete('/:id', verifyToken, (req, res) => {
       .json({ ok: true, message: 'Data not specified or wrong' });
   }
 });
-async function verify(token) {
-  const credentials = fs.readFileSync('Middlewares/credentials.json', 'utf8');
-  const parsedClient = JSON.parse(credentials);
-  const client_id = parsedClient.web.client_id;
-  const client = new OAuth2Client(client_id);
-  const ticket = await client.verifyIdToken({
-    idToken: token,
-    audience: client_id
-  });
-  const payload = ticket.getPayload();
-  return payload;
-}
+
 /*Google Sign In*/
 app.post('/google-sign', (req, res) => {
   const { body } = req;
@@ -239,7 +229,6 @@ app.post('/google-sign', (req, res) => {
           const passwordEncrypted = bcrypt.hashSync(password_generated, 10);
           const user = new User();
           const generated_id = hat();
-          console.log(generated_id);
           (user.name = data.given_name),
             (user.nickname = `${data.name} [${generated_id}]`),
             (user.email = data.email),
@@ -289,5 +278,43 @@ app.post('/google-sign', (req, res) => {
       console.log(err);
     });
 });
-
+app.post('/upload', verifyToken, (req, res) => {
+  const image = req.files.image;
+  const user = req.user;
+  if (!req.files) {
+    return res
+      .status(400)
+      .json({ ok: false, message: 'File was not specified' });
+  }
+  const fileUploaded = manageImg(image.name);
+  User.findOne({ _id: user._id }, (err, userFound) => {
+    if (userFound.image != 'default.png') {
+      const deletedImg = fs.unlinkSync(`static/${userFound.image}`);
+    }
+    image.mv(`static/${fileUploaded}`, err => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ ok: false, message: 'An error had occured' });
+      }
+    });
+    User.findByIdAndUpdate(
+      user._id,
+      { image: fileUploaded },
+      { new: true },
+      (err, userUpdated) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ ok: false, message: 'An error had occured' });
+        }
+        return res.status(200).json({
+          ok: true,
+          image: `http://localhost:3000/static/${fileUploaded}`,
+          userUpdated
+        });
+      }
+    );
+  });
+});
 module.exports = app;

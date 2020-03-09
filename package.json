@@ -14,6 +14,7 @@
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-fileupload": "^1.1.6",
     "generate-password": "^1.5.1",
     "google-auth-library": "^5.10.0",
     "hat": "0.0.3",

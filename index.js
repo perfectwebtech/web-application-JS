@@ -9,6 +9,7 @@ const user_routes = require('./controllers/user');
 const follow_routes = require('./controllers/follows');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const fileUpload = require('express-fileupload');
 /*Middlewares*/
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
@@ -17,6 +18,8 @@ mongoose.set('useUnifiedTopology', true);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'uploads')));
+app.use(fileUpload({ useTempFiles: true }));
 app.use('/api', user_routes);
 app.use('/api', follow_routes);
 mongoose.connect(
