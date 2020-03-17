@@ -9,7 +9,7 @@ const _ = require('underscore');
 const { OAuth2Client } = require('google-auth-library');
 const generate = require('generate-password');
 const hat = require('hat');
-const { manageImg } = require('../Middlewares/utils');
+const { manageImg, handleError } = require('../Middlewares/utils');
 
 /* Get all users and paginate from query params*/
 app.get('/users', verifyToken, (req, res) => {
@@ -19,9 +19,7 @@ app.get('/users', verifyToken, (req, res) => {
     .limit(limit)
     .exec((err, usersFound) => {
       if (err) {
-        return res
-          .status(500)
-          .json({ ok: false, message: 'Users couldnt be found' });
+        return handleError(500, req, res, err);
       }
       return res.status(200).json({ ok: true, usersFound });
     });
@@ -31,12 +29,10 @@ app.get('/user/:id', verifyToken, (req, res) => {
   let { id } = req.params;
   User.findById(id, (err, userFound) => {
     if (err) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'An error with server had occured' });
+      return handleError(500, req, res, err);
     }
     if (!userFound) {
-      return res.status(404).json({ ok: false, message: 'There is no user' });
+      return handleError(404, req, res);
     }
     return res.status(200).json({ ok: true, message: userFound });
   });
@@ -61,23 +57,16 @@ app.post('/register', (req, res) => {
             (user.google = false), (user.state = 'ACTIVE');
             user.save((err, userStored) => {
               if (err) {
-                return res.status(500).json({
-                  ok: true,
-                  message: 'An error with the server had occured'
-                });
+                return handleError(500, req, res, err);
               }
               return res.status(200).json({ ok: true, userStored });
             });
           });
         } else {
-          return res
-            .status(400)
-            .json({ ok: false, message: 'Data was not specified' });
+          return handleError(400, req, res);
         }
       } else {
-        return res
-          .status(400)
-          .json({ ok: false, message: 'An error had occured' });
+        return handleError(400, req, res);
       }
     }
   );
@@ -87,14 +76,10 @@ app.post('/login', (req, res) => {
   const { body } = req;
   User.findOne({ email: body.email, google: false }, (err, userFound) => {
     if (err) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'An error with the server had occured' });
+      return handleError(500, req, res, err);
     }
     if (!userFound) {
-      return res
-        .status(400)
-        .json({ ok: false, message: 'Password or email are incorrect' });
+      return handleError(404, req, res);
     }
     const user = {
       name: userFound.name,
@@ -113,11 +98,9 @@ app.post('/login', (req, res) => {
         return res.status(200).json({ ok: true, message: token });
       }
       if (err) {
-        return res
-          .status(500)
-          .json({ ok: true, message: 'An error with the server had occured' });
+        return handleError(500, req, res, err);
       }
-      return res.status(400).json({ ok: false, message: 'Password was wrong' });
+      return handleError(404, req, res);
     });
   });
 });
@@ -141,9 +124,7 @@ app.put('/:nick/:id', verifyToken, (req, res) => {
         { new: true },
         (err, userUpdated) => {
           if (err) {
-            return res
-              .status(500)
-              .json({ ok: false, message: 'Something went wrong' });
+            return handleError(500, req, res, err);
           }
           return res.status(200).json({ ok: true, message: userUpdated });
         }
@@ -156,9 +137,7 @@ app.put('/:nick/:id', verifyToken, (req, res) => {
         { new: true },
         (err, userUpdated) => {
           if (err) {
-            return res
-              .status(500)
-              .json({ ok: false, message: 'Something went wrong' });
+            return handleError(500, req, res, err);
           }
           return res.status(200).json({ ok: true, message: userUpdated });
         }
@@ -184,9 +163,7 @@ app.delete('/:id', verifyToken, (req, res) => {
         { new: true },
         (err, userSuspended) => {
           if (err) {
-            return res
-              .status(500)
-              .json({ ok: false, message: 'Something went wrong' });
+            return handleError(500, req, res, err);
           }
           return res.status(200).json({ ok: true, message: userSuspended });
         }
@@ -195,22 +172,14 @@ app.delete('/:id', verifyToken, (req, res) => {
     if (dataToUpdate.delete === 'true') {
       User.findByIdAndDelete(id, err => {
         if (err) {
-          return res
-            .status(500)
-            .json({ ok: false, message: 'Something went wrong' });
+          return handleError(500, req, res, err);
         }
-        return res
-          .status(200)
-          .json({ ok: true, message: 'User deleted correctly' });
+        return handleError(404, req, res);
       });
     }
-    return res
-      .status(400)
-      .json({ ok: true, message: 'Data not specified or wrong' });
+    return handleError(404, req, res);
   } else {
-    return res
-      .status(400)
-      .json({ ok: true, message: 'Data not specified or wrong' });
+    return handleError(404, req, res);
   }
 });
 
@@ -259,17 +228,12 @@ app.post('/google-sign', (req, res) => {
             };
             jwt.sign(user, privateKey, (err, token) => {
               if (err) {
-                return res
-                  .status(500)
-                  .json({ ok: false, message: 'Something went wrong' });
+                return handleError(500, req, res, err);
               }
               return res.status(200).json({ ok: true, token });
             });
           } else {
-            return res.status(400).json({
-              ok: false,
-              message: 'There is a user registered with that email'
-            });
+            return handleError(404, req, res);
           }
         }
       });
@@ -282,9 +246,7 @@ app.post('/upload', verifyToken, (req, res) => {
   const image = req.files.image;
   const user = req.user;
   if (!req.files) {
-    return res
-      .status(400)
-      .json({ ok: false, message: 'File was not specified' });
+    return handleError(404, req, res);
   }
   const fileUploaded = manageImg(image.name);
   User.findOne({ _id: user._id }, (err, userFound) => {
@@ -293,9 +255,7 @@ app.post('/upload', verifyToken, (req, res) => {
     }
     image.mv(`static/${fileUploaded}`, err => {
       if (err) {
-        return res
-          .status(500)
-          .json({ ok: false, message: 'An error had occured' });
+        return handleError(500, req, res, err);
       }
     });
     User.findByIdAndUpdate(
@@ -304,9 +264,7 @@ app.post('/upload', verifyToken, (req, res) => {
       { new: true },
       (err, userUpdated) => {
         if (err) {
-          return res
-            .status(500)
-            .json({ ok: false, message: 'An error had occured' });
+          return handleError(500, req, res, err);
         }
         return res.status(200).json({
           ok: true,

@@ -9,12 +9,10 @@ function verifyToken(req, res, next) {
   jwt.verify(headers, decoded, (err, decoded) => {
     if (err) {
       next(new Error('Token invalid'));
-      return res
-        .status(200)
-        .json({ ok: false, message: 'Something went wrong with the server' });
+      return res.status(500).json({ ok: false, message: 'Token invalid' });
     }
     if (!decoded) {
-      return res.status(200).json({ ok: false, message: 'Ivalid token' });
+      return res.status(400).json({ ok: false, message: 'Invalid token' });
     }
     const payload = decoded;
     req.user = payload;
@@ -29,7 +27,7 @@ function roleAuth(req, res, next) {
     next('You dont have permission to do this action');
   }
 }
-
+/*Verify Google Token*/
 async function verify(token) {
   const credentials = fs.readFileSync('Middlewares/credentials.json', 'utf8');
   const parsedClient = JSON.parse(credentials);
