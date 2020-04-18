@@ -12,11 +12,11 @@ const hat = require('hat');
 const {
   manageImg,
   handleError,
-  manageResponse
+  manageResponse,
 } = require('../Middlewares/utils');
 
 /* Get all users and paginate from query params*/
-app.get('/users', verifyToken, (req, res) => {
+app.get('/users', (req, res) => {
   const { query } = req;
   const limit = parseInt(query.limit);
   User.find({ state: 'ACTIVE' })
@@ -29,7 +29,7 @@ app.get('/users', verifyToken, (req, res) => {
     });
 });
 /*Found one user per id*/
-app.get('/user/:id', verifyToken, (req, res) => {
+app.get('/user/:id', (req, res) => {
   let { id } = req.params;
   User.findById(id, (err, userFound) => {
     if (err) {
@@ -66,7 +66,7 @@ app.post('/register', (req, res) => {
               return res.status(200).json({
                 ok: true,
                 message: userStored,
-                image: `http://localhost:3000/users/default.png`
+                image: `http://localhost:3000/users/default.png`,
               });
             });
           });
@@ -97,7 +97,7 @@ app.post('/login', (req, res) => {
       image: userFound.image,
       role: userFound.role,
       state: userFound.state,
-      google: userFound.google
+      google: userFound.google,
     };
     bcrypt.compare(body.password, userFound.password, (err, matched) => {
       if (matched) {
@@ -116,10 +116,10 @@ app.post('/login', (req, res) => {
 /*Update user data*/
 app.put('/useData/:nick/:id', verifyToken, (req, res) => {
   const {
-    params: { nick }
+    params: { nick },
   } = req;
   const {
-    params: { id }
+    params: { id },
   } = req;
   const actualUser = req.user;
   const { body: data } = req;
@@ -159,7 +159,7 @@ app.put('/useData/:nick/:id', verifyToken, (req, res) => {
 app.delete('/:id', verifyToken, (req, res) => {
   const dataToUpdate = _.pick(req.body, ['state', 'delete']);
   const {
-    params: { id }
+    params: { id },
   } = req;
   if (id != undefined) {
     if (dataToUpdate.state === 'SUSPENDED') {
@@ -176,7 +176,7 @@ app.delete('/:id', verifyToken, (req, res) => {
       );
     }
     if (dataToUpdate.delete === 'true') {
-      User.findByIdAndDelete(id, err => {
+      User.findByIdAndDelete(id, (err) => {
         if (err) {
           return handleError(500, req, res, err);
         }
@@ -193,12 +193,12 @@ app.delete('/:id', verifyToken, (req, res) => {
 app.post('/google-sign', (req, res) => {
   const { body } = req;
   verify(body.idtoken)
-    .then(data => {
+    .then((data) => {
       User.findOne({ email: data.email }, (err, userFound) => {
         if (userFound == null) {
           const password_generated = generate.generate({
             length: 8,
-            numbers: true
+            numbers: true,
           });
           const passwordEncrypted = bcrypt.hashSync(password_generated, 10);
           const user = new User();
@@ -229,7 +229,7 @@ app.post('/google-sign', (req, res) => {
               image: userFound.image,
               role: userFound.role,
               state: userFound.state,
-              google: userFound.google
+              google: userFound.google,
             };
             jwt.sign(user, privateKey, (err, token) => {
               if (err) {
@@ -243,7 +243,7 @@ app.post('/google-sign', (req, res) => {
         }
       });
     })
-    .catch(err => {
+    .catch((err) => {
       throw new Error('There was an error');
     });
 });
@@ -258,7 +258,7 @@ app.post('/upload', verifyToken, (req, res) => {
     if (userFound.image != 'default.png' && userFound) {
       const deletedImg = fs.unlinkSync(`uploads/users/${userFound.image}`);
     }
-    image.mv(`uploads/users/${fileUploaded}`, err => {
+    image.mv(`uploads/users/${fileUploaded}`, (err) => {
       if (err) {
         return handleError(500, req, res, err);
       }
@@ -274,7 +274,7 @@ app.post('/upload', verifyToken, (req, res) => {
         return res.status(200).json({
           ok: true,
           image: `http://localhost:3000/users/${fileUploaded}`,
-          userUpdated
+          userUpdated,
         });
       }
     );
