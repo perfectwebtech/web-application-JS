@@ -7,7 +7,7 @@ const publicationSchema = new Schema({
     ref: 'User'
   },
   text: {
-    required,
+    required: true,
     type: String
   },
   createdAt: {
@@ -15,14 +15,15 @@ const publicationSchema = new Schema({
   },
   likes: {
     type: Number,
-    required,
+    required: true,
     default: 0
   },
-  comments: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Comment'
-    }
-  ]
+  comments: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment'
+  },
+  image: {
+    type: String
+  }
 });
 module.exports = mongoose.model('Publication', publicationSchema);

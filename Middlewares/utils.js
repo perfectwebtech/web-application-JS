@@ -1,3 +1,4 @@
+const hat = require('hat');
 function manageImg(file) {
   file = file.replace(/\s/g, '');
   const fileExt = file.split('.');
@@ -8,18 +9,24 @@ function manageImg(file) {
     return fileToUpload;
   }
 }
-function handleError(status, req, res, err) {
+function handleError(status, req, res) {
   if (status === 400 || status === 404) {
     return res
       .status(status)
       .json({ ok: false, message: 'Object could not be found' });
   }
-  if (status === 500 && err != null) {
-    console.error(err);
+  if (status === 500) {
     return res.status(status).json({ ok: false, message: 'Internal error' });
   }
 }
+function manageResponse(status, message, req, res) {
+  if (status === 200) {
+    return res.status(status).json({ ok: true, message });
+  }
+}
+
 module.exports = {
   manageImg,
-  handleError
+  handleError,
+  manageResponse
 };

@@ -9,7 +9,11 @@ const _ = require('underscore');
 const { OAuth2Client } = require('google-auth-library');
 const generate = require('generate-password');
 const hat = require('hat');
-const { manageImg, handleError } = require('../Middlewares/utils');
+const {
+  manageImg,
+  handleError,
+  manageResponse
+} = require('../Middlewares/utils');
 
 /* Get all users and paginate from query params*/
 app.get('/users', verifyToken, (req, res) => {
@@ -21,7 +25,7 @@ app.get('/users', verifyToken, (req, res) => {
       if (err) {
         return handleError(500, req, res, err);
       }
-      return res.status(200).json({ ok: true, usersFound });
+      return manageResponse(200, usersFound, req, res);
     });
 });
 /*Found one user per id*/
@@ -34,7 +38,7 @@ app.get('/user/:id', verifyToken, (req, res) => {
     if (!userFound) {
       return handleError(404, req, res);
     }
-    return res.status(200).json({ ok: true, message: userFound });
+    return manageResponse(200, userFound, req, res);
   });
 });
 /*Register a user*/
@@ -59,7 +63,11 @@ app.post('/register', (req, res) => {
               if (err) {
                 return handleError(500, req, res, err);
               }
-              return res.status(200).json({ ok: true, userStored });
+              return res.status(200).json({
+                ok: true,
+                message: userStored,
+                image: `http://localhost:3000/users/default.png`
+              });
             });
           });
         } else {
@@ -95,7 +103,7 @@ app.post('/login', (req, res) => {
       if (matched) {
         const privateKey = fs.readFileSync('Middlewares/private.key', 'utf8');
         const token = jwt.sign(user, privateKey, { expiresIn: '48h' });
-        return res.status(200).json({ ok: true, message: token });
+        return manageResponse(200, token, req, res);
       }
       if (err) {
         return handleError(500, req, res, err);
@@ -106,7 +114,7 @@ app.post('/login', (req, res) => {
 });
 
 /*Update user data*/
-app.put('/:nick/:id', verifyToken, (req, res) => {
+app.put('/useData/:nick/:id', verifyToken, (req, res) => {
   const {
     params: { nick }
   } = req;
@@ -126,7 +134,7 @@ app.put('/:nick/:id', verifyToken, (req, res) => {
           if (err) {
             return handleError(500, req, res, err);
           }
-          return res.status(200).json({ ok: true, message: userUpdated });
+          return manageResponse(200, userUpdated, req, res);
         }
       );
     } else {
@@ -139,17 +147,15 @@ app.put('/:nick/:id', verifyToken, (req, res) => {
           if (err) {
             return handleError(500, req, res, err);
           }
-          return res.status(200).json({ ok: true, message: userUpdated });
+          return manageResponse(200, userUpdated, req, res);
         }
       );
     }
   } else {
-    return res.status(400).json({
-      ok: false,
-      message: 'You dont have permission to change this data'
-    });
+    return handleError(400, req, res);
   }
 });
+/*Delete User data*/
 app.delete('/:id', verifyToken, (req, res) => {
   const dataToUpdate = _.pick(req.body, ['state', 'delete']);
   const {
@@ -165,7 +171,7 @@ app.delete('/:id', verifyToken, (req, res) => {
           if (err) {
             return handleError(500, req, res, err);
           }
-          return res.status(200).json({ ok: true, message: userSuspended });
+          return manageResponse(200, userSuspended, req, res);
         }
       );
     }
@@ -189,7 +195,6 @@ app.post('/google-sign', (req, res) => {
   verify(body.idtoken)
     .then(data => {
       User.findOne({ email: data.email }, (err, userFound) => {
-        console.log(userFound);
         if (userFound == null) {
           const password_generated = generate.generate({
             length: 8,
@@ -230,7 +235,7 @@ app.post('/google-sign', (req, res) => {
               if (err) {
                 return handleError(500, req, res, err);
               }
-              return res.status(200).json({ ok: true, token });
+              return manageResponse(200, token, req, res);
             });
           } else {
             return handleError(404, req, res);
@@ -239,7 +244,7 @@ app.post('/google-sign', (req, res) => {
       });
     })
     .catch(err => {
-      console.log(err);
+      throw new Error('There was an error');
     });
 });
 app.post('/upload', verifyToken, (req, res) => {
@@ -250,10 +255,10 @@ app.post('/upload', verifyToken, (req, res) => {
   }
   const fileUploaded = manageImg(image.name);
   User.findOne({ _id: user._id }, (err, userFound) => {
-    if (userFound.image != 'default.png') {
-      const deletedImg = fs.unlinkSync(`static/${userFound.image}`);
+    if (userFound.image != 'default.png' && userFound) {
+      const deletedImg = fs.unlinkSync(`uploads/users/${userFound.image}`);
     }
-    image.mv(`static/${fileUploaded}`, err => {
+    image.mv(`uploads/users/${fileUploaded}`, err => {
       if (err) {
         return handleError(500, req, res, err);
       }
@@ -268,7 +273,7 @@ app.post('/upload', verifyToken, (req, res) => {
         }
         return res.status(200).json({
           ok: true,
-          image: `http://localhost:3000/static/${fileUploaded}`,
+          image: `http://localhost:3000/users/${fileUploaded}`,
           userUpdated
         });
       }
