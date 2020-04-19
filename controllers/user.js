@@ -14,6 +14,7 @@ const {
   handleError,
   manageResponse,
 } = require('../Middlewares/utils');
+const mongoose = require('mongoose');
 
 /* Get all users and paginate from query params*/
 app.get('/users', (req, res) => {
@@ -51,24 +52,28 @@ app.post('/register', (req, res) => {
       if (userFound.length == 0) {
         if (body.password && body.email && body.nickname && body.name) {
           bcrypt.hash(body.password, saltRounds, (err, encrypted) => {
-            const user = new User();
-            user.password = encrypted;
-            user.email = body.email;
-            user.image = 'default.png';
-            user.nickname = body.nickname;
-            user.name = body.name;
-            user.role = 'USER';
-            (user.google = false), (user.state = 'ACTIVE');
-            user.save((err, userStored) => {
-              if (err) {
-                return handleError(500, req, res, err);
+            User.create(
+              {
+                password: encrypted,
+                email: body.email,
+                image: 'default.png',
+                nickname: body.nickname,
+                name: body.name,
+                role: 'USER',
+                google: false,
+                state: 'ACTIVE',
+              },
+              (err) => {
+                if (err) {
+                  return handleError(500, req, res, err);
+                }
+                return res.status(200).json({
+                  ok: true,
+                  message: 'User was stored',
+                  image: `http://localhost:3000/users/default.png`,
+                });
               }
-              return res.status(200).json({
-                ok: true,
-                message: userStored,
-                image: `http://localhost:3000/users/default.png`,
-              });
-            });
+            );
           });
         } else {
           return handleError(400, req, res);
