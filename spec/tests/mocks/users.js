@@ -9,4 +9,13 @@ module.exports = {
     nickname: 'alex_fiorenza',
     name: 'Alex',
   },
+  monica: {
+    role: 'USER',
+    google: false,
+    state: 'ACTIVE',
+    password: '$2b$10$1GJa/4SqdWy0OQp7e8blE.HQlN1/QcWn/J.WCHY3YWcjLOwWqWMS6',
+    email: 'monica@gmail.com',
+    nickname: 'monica_villegas',
+    name: 'Monica',
+  },
 };

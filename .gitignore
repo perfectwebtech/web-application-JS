@@ -3,3 +3,4 @@ Middlewares/private.key
 Middlewares/config.env
 Middlewares/credentials.json
 uploads/
+spec/
