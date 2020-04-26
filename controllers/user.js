@@ -9,7 +9,6 @@ const _ = require('underscore');
 const { OAuth2Client } = require('google-auth-library');
 const generate = require('generate-password');
 const hat = require('hat');
-const io = require('../index');
 const {
   manageImg,
   handleError,
@@ -285,4 +284,5 @@ router.post('/upload', verifyToken, (req, res) => {
     );
   });
 });
+
 module.exports = router;

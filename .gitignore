@@ -4,3 +4,4 @@ Middlewares/config.env
 Middlewares/credentials.json
 uploads/
 spec/
+public/

@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const path = require('path');
-const server = http.createServer(app);
+let server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 const chalk = require('chalk');
 const user_routes = require('./controllers/user');
@@ -26,6 +26,8 @@ app.use(fileUpload({ useTempFiles: true }));
 app.use('/api', user_routes);
 app.use('/api', follow_routes);
 app.use('/api', publication_routes);
+module.exports.io = io;
+app.use(require('./controllers/sockets/sockets'));
 mongoose.connect(
   'mongodb://localhost:27017/web-app',
   { useUnifiedTopology: true, useNewUrlParser: true },
@@ -38,4 +40,3 @@ mongoose.connect(
     });
   }
 );
-module.exports = io;
