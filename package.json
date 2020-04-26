@@ -4,12 +4,13 @@
   "description": "A web-app backend ",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "nyc node spec/spec.js",
     "start-dev": "nodemon index.js"
   },
   "author": "Alex Fiorenza",
   "license": "MIT",
   "dependencies": {
+    "axios": "^0.19.2",
     "bcrypt": "^3.0.8",
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
@@ -20,10 +21,27 @@
     "hat": "0.0.3",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.1",
+    "morgan": "^1.10.0",
     "underscore": "^1.9.2"
   },
   "devDependencies": {
     "chalk": "^3.0.0",
-    "nodemon": "^2.0.2"
+    "jasmine": "^3.5.0",
+    "jasmine-console-reporter": "^3.1.0",
+    "nodemon": "^2.0.2",
+    "nyc": "^15.0.1"
+  },
+  "nyc": {
+    "report-dir": "./spec/istanbul/report",
+    "temp-dir": "./spec/istanbul",
+    "reporter": [
+      "text",
+      "text-summary",
+      "html"
+    ],
+    "exclude": [
+      "spec/**/*",
+      "spec/tests/*.spec.js"
+    ]
   }
 }

@@ -24,9 +24,21 @@ function manageResponse(status, message, req, res) {
     return res.status(status).json({ ok: true, message });
   }
 }
-
+function manageTestResponse(message) {
+  return { ok: true, message };
+}
+function handleTestError(status) {
+  if (status === 400 || status === 404) {
+    return { ok: false, message: 'Object could not be found' };
+  }
+  if (status === 500) {
+    return { ok: false, message: 'Internal error' };
+  }
+}
 module.exports = {
   manageImg,
   handleError,
-  manageResponse
+  manageResponse,
+  manageTestResponse,
+  handleTestError,
 };
