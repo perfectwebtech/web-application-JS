@@ -2,13 +2,14 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const axios = require('axios').default;
-const request = require('request');
 const logger = require('morgan');
 const User = require('../../models/user');
 const userRouter = require('../../controllers/user');
 const { alex, monica } = require('./mocks/users');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const auth = require('../../Middlewares/auth');
 const {
   manageTestResponse,
   handleTestError,
@@ -200,6 +201,79 @@ describe('Initialize server', () => {
         .then((res) => {})
         .catch((err) => {
           expect(err.response.status).toBe(400);
+          done();
+        });
+    });
+    //** LOGIN USER
+    it('200 logIn user', (done) => {
+      spyOn(User, 'findOne').and.callFake((data, callback) => {
+        callback(false, alex);
+      });
+      spyOn(bcrypt, 'compare').and.callFake(
+        (bodyPassword, userPassword, callback) => {
+          callback(false, 'encryptedPassword');
+        }
+      );
+      axios.post('http://localhost:3000/api/login', alex).then((res) => {
+        expect(res.status).toBe(200);
+        done();
+      });
+    });
+    it('500 logIn user', (done) => {
+      spyOn(User, 'findOne').and.callFake((data, callback) => {
+        callback(true, alex);
+      });
+      axios
+        .post('http://localhost:3000/api/login', alex)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(500);
+          done();
+        });
+    });
+    it('404 logIn user', (done) => {
+      spyOn(User, 'findOne').and.callFake((data, callback) => {
+        callback(false, undefined);
+      });
+      axios
+        .post('http://localhost:3000/api/login', alex)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(404);
+          done();
+        });
+    });
+    it('500 logIn user (compare password)', (done) => {
+      spyOn(User, 'findOne').and.callFake((data, callback) => {
+        callback(false, alex);
+      });
+      spyOn(bcrypt, 'compare').and.callFake(
+        (bodyPassword, userPassword, callback) => {
+          callback(true);
+        }
+      );
+      axios
+        .post('http://localhost:3000/api/login', alex)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(500);
+          done();
+        });
+    });
+    it('404 logIn user (compare password)', (done) => {
+      spyOn(User, 'findOne').and.callFake((data, callback) => {
+        callback(false, alex);
+      });
+      spyOn(bcrypt, 'compare').and.callFake(
+        (bodyPassword, userPassword, callback) => {
+          callback(false);
+        }
+      );
+      axios
+        .post('http://localhost:3000/api/login', alex)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(404);
           done();
         });
     });
