@@ -1,5 +1,5 @@
 const express = require('express');
-const app = express();
+const router = express.Router();
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const { verifyToken, roleAuth, verify } = require('../Middlewares/auth');
@@ -9,15 +9,15 @@ const _ = require('underscore');
 const { OAuth2Client } = require('google-auth-library');
 const generate = require('generate-password');
 const hat = require('hat');
+const io = require('../index');
 const {
   manageImg,
   handleError,
   manageResponse,
 } = require('../Middlewares/utils');
 const mongoose = require('mongoose');
-
 /* Get all users and paginate from query params*/
-app.get('/users', (req, res) => {
+router.get('/users', (req, res) => {
   const { query } = req;
   const limit = parseInt(query.limit);
   User.find({ state: 'ACTIVE' })
@@ -30,7 +30,7 @@ app.get('/users', (req, res) => {
     });
 });
 /*Found one user per id*/
-app.get('/user/:id', (req, res) => {
+router.get('/user/:id', (req, res) => {
   let { id } = req.params;
   User.findById(id, (err, userFound) => {
     if (err) {
@@ -43,7 +43,7 @@ app.get('/user/:id', (req, res) => {
   });
 });
 /*Register a user*/
-app.post('/register', (req, res) => {
+router.post('/register', (req, res) => {
   const saltRounds = 10;
   const { body } = req;
   User.find(
@@ -85,7 +85,7 @@ app.post('/register', (req, res) => {
   );
 });
 /*LogIn users*/
-app.post('/login', (req, res) => {
+router.post('/login', (req, res) => {
   const { body } = req;
   User.findOne({ email: body.email, google: false }, (err, userFound) => {
     if (err) {
@@ -119,7 +119,7 @@ app.post('/login', (req, res) => {
 });
 
 /*Update user data*/
-app.put('/useData/:nick/:id', verifyToken, (req, res) => {
+router.put('/useData/:nick/:id', verifyToken, (req, res) => {
   const {
     params: { nick },
   } = req;
@@ -161,7 +161,7 @@ app.put('/useData/:nick/:id', verifyToken, (req, res) => {
   }
 });
 /*Delete User data*/
-app.delete('/:id', verifyToken, (req, res) => {
+router.delete('/:id', verifyToken, (req, res) => {
   const dataToUpdate = _.pick(req.body, ['state', 'delete']);
   const {
     params: { id },
@@ -195,7 +195,7 @@ app.delete('/:id', verifyToken, (req, res) => {
 });
 
 /*Google Sign In*/
-app.post('/google-sign', (req, res) => {
+router.post('/google-sign', (req, res) => {
   const { body } = req;
   verify(body.idtoken)
     .then((data) => {
@@ -252,7 +252,7 @@ app.post('/google-sign', (req, res) => {
       throw new Error('There was an error');
     });
 });
-app.post('/upload', verifyToken, (req, res) => {
+router.post('/upload', verifyToken, (req, res) => {
   const image = req.files.image;
   const user = req.user;
   if (!req.files) {
@@ -285,4 +285,4 @@ app.post('/upload', verifyToken, (req, res) => {
     );
   });
 });
-module.exports = app;
+module.exports = router;

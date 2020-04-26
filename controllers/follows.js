@@ -1,11 +1,11 @@
 const express = require('express');
-const app = express();
+const router = express.Router();
 const Follow = require('../models/follows');
 const User = require('../models/follows');
 const { verifyToken } = require('../Middlewares/auth');
 const _ = require('underscore');
 
-app.get('/follow', verifyToken, (req, res) => {
+router.get('/follow', verifyToken, (req, res) => {
   const user = req.user;
   const { query } = req;
   if (query.count == 'true') {
@@ -34,9 +34,9 @@ app.get('/follow', verifyToken, (req, res) => {
 });
 
 /*Follow someone by id*/
-app.post('/follow/:id', verifyToken, (req, res) => {
+router.post('/follow/:id', verifyToken, (req, res) => {
   const {
-    params: { id }
+    params: { id },
   } = req;
   const user = req.user;
   if (id != user._id) {
@@ -46,7 +46,7 @@ app.post('/follow/:id', verifyToken, (req, res) => {
         if (followFound) {
           return res.status(400).json({
             ok: false,
-            message: 'You are already following this person'
+            message: 'You are already following this person',
           });
         }
         if (err) {
@@ -77,9 +77,9 @@ app.post('/follow/:id', verifyToken, (req, res) => {
 });
 
 /*Delete a follow*/
-app.delete('/follow/:id', verifyToken, (req, res) => {
+router.delete('/follow/:id', verifyToken, (req, res) => {
   const {
-    params: { id }
+    params: { id },
   } = req;
   const user = req.user;
   Follow.findOne({ following: user._id, followed: id })
@@ -104,4 +104,4 @@ app.delete('/follow/:id', verifyToken, (req, res) => {
     });
 });
 
-module.exports = app;
+module.exports = router;

@@ -1,17 +1,17 @@
 const express = require('express');
-const app = express();
+const router = express.Router();
 const Publication = require('../models/publication');
 const { verifyToken } = require('../Middlewares/auth');
 const {
   handleError,
   manageResponse,
-  manageImg
+  manageImg,
 } = require('../Middlewares/utils');
 const _ = require('underscore');
 const fs = require('fs');
 
 /*Get all publications | HEAVY CONSUME |*/
-app.get('/publications', (req, res) => {
+router.get('/publications', (req, res) => {
   Publication.find({}, (err, publicationFound) => {
     if (err) {
       return handleError(500, req, res);
@@ -23,9 +23,9 @@ app.get('/publications', (req, res) => {
   });
 });
 /*Get one publication by id*/
-app.get('/publications/:id', (req, res) => {
+router.get('/publications/:id', (req, res) => {
   const {
-    params: { id }
+    params: { id },
   } = req;
   Publication.findById(id, (err, publicationFound) => {
     if (err) {
@@ -37,9 +37,9 @@ app.get('/publications/:id', (req, res) => {
     return manageResponse(200, publicationFound, req, res);
   });
 });
-app.get('/publications/users/:id', (req, res) => {
+router.get('/publications/users/:id', (req, res) => {
   const {
-    params: { id }
+    params: { id },
   } = req;
   Publication.findOne({ creator: id }, (err, userFound) => {
     if (err) {
@@ -51,7 +51,7 @@ app.get('/publications/users/:id', (req, res) => {
     return manageResponse(200, userFound, req, res);
   });
 });
-app.post('/publication', verifyToken, (req, res) => {
+router.post('/publication', verifyToken, (req, res) => {
   const { body } = req;
   const publication = new Publication();
   const image = req.files.image;
@@ -59,7 +59,7 @@ app.post('/publication', verifyToken, (req, res) => {
     creator: req.user._id,
     text: body.text,
     createdAt: new Date().getTime(),
-    likes: 0
+    likes: 0,
   };
   const fileUploaded = manageImg(image.name);
   publication.image = fileUploaded || null;
@@ -74,7 +74,7 @@ app.post('/publication', verifyToken, (req, res) => {
     if (!pubStored) {
       return handleError(404, req, res);
     }
-    image.mv(`uploads/publications/${fileUploaded}`, err => {
+    image.mv(`uploads/publications/${fileUploaded}`, (err) => {
       if (err) {
         return handleError(500, req, res, err);
       }
@@ -82,17 +82,17 @@ app.post('/publication', verifyToken, (req, res) => {
     return res.status(200).json({
       ok: true,
       message: pubStored,
-      image: `http://localhost:3000/publications/${fileUploaded}`
+      image: `http://localhost:3000/publications/${fileUploaded}`,
     });
   });
 });
 
-app.delete('/publication/:id', verifyToken, (req, res) => {
+router.delete('/publication/:id', verifyToken, (req, res) => {
   const {
-    params: { id }
+    params: { id },
   } = req;
   const {
-    user: { _id: userId }
+    user: { _id: userId },
   } = req;
   Publication.findOneAndDelete(
     { _id: id, creator: userId },
@@ -105,4 +105,4 @@ app.delete('/publication/:id', verifyToken, (req, res) => {
   );
 });
 /*TODO Check with socket.io likes status*/
-module.exports = app;
+module.exports = router;

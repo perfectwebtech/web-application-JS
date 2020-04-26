@@ -11,6 +11,8 @@ const publication_routes = require('./controllers/publication');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const fileUpload = require('express-fileupload');
+const socketIo = require('socket.io');
+const io = socketIo(server);
 /*Middlewares*/
 mongoose.set('useNewUrlParser', true);
 mongoose.set('useFindAndModify', false);
@@ -27,7 +29,7 @@ app.use('/api', publication_routes);
 mongoose.connect(
   'mongodb://localhost:27017/web-app',
   { useUnifiedTopology: true, useNewUrlParser: true },
-  err => {
+  (err) => {
     console.log(`${chalk.green('[MongoDB]')} connected correctly to database`);
     server.listen(PORT, () => {
       console.log(
@@ -36,3 +38,4 @@ mongoose.connect(
     });
   }
 );
+module.exports = io;

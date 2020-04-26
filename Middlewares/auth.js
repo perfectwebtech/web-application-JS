@@ -35,7 +35,7 @@ async function verify(token) {
   const client = new OAuth2Client(client_id);
   const ticket = await client.verifyIdToken({
     idToken: token,
-    audience: client_id
+    audience: client_id,
   });
   const payload = ticket.getPayload();
   return payload;
@@ -44,5 +44,5 @@ async function verify(token) {
 module.exports = {
   verifyToken,
   roleAuth,
-  verify
+  verify,
 };
