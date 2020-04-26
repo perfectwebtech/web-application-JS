@@ -39,10 +39,15 @@
         });
       }
     </script>
+    <button id="btn">Like publication</button>
     <script>
       var io = io();
       io.on('connect', () => {
         console.log('connected succesfully');
+        const button = document.querySelector('#btn');
+        button.addEventListener('click', () => {
+          io.emit('btnClicked', { like: true });
+        });
       });
     </script>
   </body>
