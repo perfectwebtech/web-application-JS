@@ -104,5 +104,4 @@ router.delete('/publication/:id', verifyToken, (req, res) => {
     }
   );
 });
-/*TODO Check with socket.io likes status*/
 module.exports = router;
