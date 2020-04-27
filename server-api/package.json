@@ -10,7 +10,6 @@
   "author": "Alex Fiorenza",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.2",
     "bcrypt": "^3.0.8",
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
@@ -26,11 +25,13 @@
     "underscore": "^1.9.2"
   },
   "devDependencies": {
+    "axios": "^0.19.2",
     "chalk": "^3.0.0",
     "jasmine": "^3.5.0",
     "jasmine-console-reporter": "^3.1.0",
     "nodemon": "^2.0.2",
-    "nyc": "^15.0.1"
+    "nyc": "^15.0.1",
+    "superagent": "^5.2.2"
   },
   "nyc": {
     "report-dir": "./spec/istanbul/report",

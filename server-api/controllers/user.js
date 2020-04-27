@@ -118,45 +118,38 @@ router.post('/login', (req, res) => {
 });
 
 /*Update user data*/
-router.put('/useData/:nick/:id', verifyToken, (req, res) => {
-  const {
-    params: { nick },
-  } = req;
+router.put('/userData/:id', verifyToken, (req, res) => {
   const {
     params: { id },
   } = req;
   const actualUser = req.user;
   const { body: data } = req;
-  if (actualUser.nickname === nick) {
-    if (actualUser.google) {
-      const googleUser = _.pick(data, ['nickname']);
-      User.findByIdAndUpdate(
-        id,
-        googleUser,
-        { new: true },
-        (err, userUpdated) => {
-          if (err) {
-            return handleError(500, req, res, err);
-          }
-          return manageResponse(200, userUpdated, req, res);
+  if (actualUser.google) {
+    const googleUser = _.pick(data, ['nickname']);
+    User.findByIdAndUpdate(
+      id,
+      googleUser,
+      { new: true },
+      (err, userUpdated) => {
+        if (err) {
+          return handleError(500, req, res, err);
         }
-      );
-    } else {
-      const userToUpdate = _.pick(data, ['name', 'nickname', 'email', 'image']);
-      User.findByIdAndUpdate(
-        id,
-        userToUpdate,
-        { new: true },
-        (err, userUpdated) => {
-          if (err) {
-            return handleError(500, req, res, err);
-          }
-          return manageResponse(200, userUpdated, req, res);
-        }
-      );
-    }
+        return manageResponse(200, userUpdated, req, res);
+      }
+    );
   } else {
-    return handleError(400, req, res);
+    const userToUpdate = _.pick(data, ['name', 'nickname', 'email', 'image']);
+    User.findByIdAndUpdate(
+      id,
+      userToUpdate,
+      { new: true },
+      (err, userUpdated) => {
+        if (err) {
+          return handleError(500, req, res, err);
+        }
+        return manageResponse(200, userUpdated, req, res);
+      }
+    );
   }
 });
 /*Delete User data*/
@@ -165,35 +158,32 @@ router.delete('/:id', verifyToken, (req, res) => {
   const {
     params: { id },
   } = req;
-  if (id != undefined) {
-    if (dataToUpdate.state === 'SUSPENDED') {
-      User.findByIdAndUpdate(
-        id,
-        dataToUpdate,
-        { new: true },
-        (err, userSuspended) => {
-          if (err) {
-            return handleError(500, req, res, err);
-          }
-          return manageResponse(200, userSuspended, req, res);
-        }
-      );
-    }
-    if (dataToUpdate.delete === 'true') {
-      User.findByIdAndDelete(id, (err) => {
+  if (dataToUpdate.state === 'SUSPENDED') {
+    User.findByIdAndUpdate(
+      id,
+      dataToUpdate,
+      { new: true },
+      (err, userSuspended) => {
         if (err) {
           return handleError(500, req, res, err);
         }
-        return handleError(404, req, res);
-      });
-    }
-    return handleError(404, req, res);
-  } else {
-    return handleError(404, req, res);
+        return manageResponse(200, userSuspended, req, res);
+      }
+    );
   }
+  if (dataToUpdate.delete === 'true') {
+    User.findByIdAndDelete(id, (err) => {
+      if (err) {
+        return handleError(500, req, res, err);
+      }
+      manageResponse(200, 'User deleted correctly', req, res);
+    });
+  }
+  return handleError(404, req, res);
 });
 
 /*Google Sign In*/
+/* istanbul ignore next */
 router.post('/google-sign', (req, res) => {
   const { body } = req;
   verify(body.idtoken)
@@ -207,18 +197,21 @@ router.post('/google-sign', (req, res) => {
           const passwordEncrypted = bcrypt.hashSync(password_generated, 10);
           const user = new User();
           const generated_id = hat();
-          (user.name = data.given_name),
-            (user.nickname = `${data.name} [${generated_id}]`),
-            (user.email = data.email),
-            (user.image = data.picture),
-            (user.role = 'USER'),
-            (user.state = 'ACTIVE'),
-            (user.google = true),
-            (user.password = passwordEncrypted);
-
-          user.save((err, userStored) => {
-            return res.json({ ok: true, userStored });
-          });
+          User.create(
+            {
+              name: data.given_name,
+              nickname: `${data.name} [${generated_id}]`,
+              email: data.email,
+              image: data.picture,
+              role: 'USER',
+              state: 'ACTIVE',
+              google: true,
+              password: passwordEncrypted,
+            },
+            (err, userStored) => {
+              return manageResponse(200, userStored, req, res);
+            }
+          );
         } else {
           if (userFound.google) {
             const privateKey = fs.readFileSync(
@@ -251,6 +244,7 @@ router.post('/google-sign', (req, res) => {
       throw new Error('There was an error');
     });
 });
+/* istanbul ignore next */
 router.post('/upload', verifyToken, (req, res) => {
   const image = req.files.image;
   const user = req.user;

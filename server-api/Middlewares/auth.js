@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const { OAuth2Client } = require('google-auth-library');
@@ -19,6 +20,7 @@ function verifyToken(req, res, next) {
   });
   next();
 }
+
 function roleAuth(req, res, next) {
   const user = req.user;
   if (user.role === 'ADMIN') {
@@ -40,7 +42,6 @@ async function verify(token) {
   const payload = ticket.getPayload();
   return payload;
 }
-
 module.exports = {
   verifyToken,
   roleAuth,

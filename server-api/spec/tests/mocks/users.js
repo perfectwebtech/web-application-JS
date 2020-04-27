@@ -18,4 +18,34 @@ module.exports = {
     nickname: 'monica_villegas',
     name: 'Monica',
   },
+  alexGoogle: {
+    role: 'USER',
+    google: true,
+    state: 'ACTIVE',
+    password: '$2b$10$1GJa/4SqdWy0OQp7e8blE.HQlN1/QcWn/J.WCHY3YWcjLOwWqWMS6',
+    email: 'alexfiorenza2012@gmail.com',
+    image: 'eren_fundador-9159be5fcf3fae602b1b82ebecde0690-1585801585067.jpg',
+    nickname: 'alex_fiorenza2',
+    name: 'Alex',
+  },
+  userGoogle: {
+    iss: 'accounts.google.com',
+    azp:
+      '575706686592-oi0nin924u61v3fumi84b42h3jdhv754.apps.googleusercontent.com',
+    aud:
+      '575706686592-oi0nin924u61v3fumi84b42h3jdhv754.apps.googleusercontent.com',
+    sub: '115214416581215175880',
+    email: 'alexfiorenza2012@gmail.com',
+    email_verified: true,
+    at_hash: '-Qinj_nH_pccID53NhNGaA',
+    name: 'Alex Fiorenza',
+    picture:
+      'https://lh3.googleusercontent.com/a-/AOh14GhtzbyMQjcuNQV8Myo4m9YuDKLmRKKGVghGE6xH3A=s96-c',
+    given_name: 'Alex',
+    family_name: 'Fiorenza',
+    locale: 'en-GB',
+    iat: 1587950405,
+    exp: 1587954005,
+    jti: '660caa820e63127e3c105d318b34ce88e8bb6648',
+  },
 };

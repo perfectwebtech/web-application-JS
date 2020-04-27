@@ -1,4 +1,6 @@
+/* istanbul ignore file */
 const hat = require('hat');
+
 function manageImg(file) {
   file = file.replace(/\s/g, '');
   const fileExt = file.split('.');
@@ -35,6 +37,7 @@ function handleTestError(status) {
     return { ok: false, message: 'Internal error' };
   }
 }
+
 module.exports = {
   manageImg,
   handleError,

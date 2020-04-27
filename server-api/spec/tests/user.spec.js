@@ -5,11 +5,13 @@ const axios = require('axios').default;
 const logger = require('morgan');
 const User = require('../../models/user');
 const userRouter = require('../../controllers/user');
-const { alex, monica } = require('./mocks/users');
+const { alex, monica, alexGoogle, userGoogle } = require('./mocks/users');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const auth = require('../../Middlewares/auth');
+const hat = require('hat');
+const superagent = require('superagent');
 const {
   manageTestResponse,
   handleTestError,
@@ -21,7 +23,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use('/api', userRouter);
 app.set('port', 3000);
-
+function verifyTokenTests(userReturned) {
+  spyOn(jwt, 'verify').and.callFake((headers, decoded, callback) => {
+    callback(false, userReturned);
+  });
+}
 describe('Initialize server', () => {
   let server;
   beforeAll(() => {
@@ -221,7 +227,7 @@ describe('Initialize server', () => {
     });
     it('500 logIn user', (done) => {
       spyOn(User, 'findOne').and.callFake((data, callback) => {
-        callback(true, alex);
+        callback(true);
       });
       axios
         .post('http://localhost:3000/api/login', alex)
@@ -274,6 +280,146 @@ describe('Initialize server', () => {
         .then((res) => {})
         .catch((err) => {
           expect(err.response.status).toBe(404);
+          done();
+        });
+    });
+    //** Update user Data
+    it('200 update user data google', (done) => {
+      verifyTokenTests(alexGoogle);
+      const id = hat();
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, googleUser, opts, callback) => {
+          callback(false, alexGoogle);
+        }
+      );
+      axios.put(`http://localhost:3000/api/userData/${id}`).then((res) => {
+        expect(res.status).toBe(200);
+        expect(res.data).toEqual(manageTestResponse(alexGoogle));
+        done();
+      });
+    });
+    it('500 update user data google', (done) => {
+      verifyTokenTests(alexGoogle);
+      const id = hat();
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, googleUser, opts, callback) => {
+          callback(true);
+        }
+      );
+      axios
+        .put(`http://localhost:3000/api/userData/${id}`)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(500);
+          done();
+        });
+    });
+    it('200 update user data', (done) => {
+      verifyTokenTests(monica);
+      const id = hat();
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, googleUser, opts, callback) => {
+          callback(false, monica);
+        }
+      );
+      axios.put(`http://localhost:3000/api/userData/${id}`).then((res) => {
+        expect(res.status).toBe(200);
+        expect(res.data).toEqual(manageTestResponse(monica));
+        done();
+      });
+    });
+    it('500 update user data', (done) => {
+      verifyTokenTests(monica);
+      const id = hat();
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, googleUser, opts, callback) => {
+          callback(true);
+        }
+      );
+      axios
+        .put(`http://localhost:3000/api/userData/${id}`)
+        .then((res) => {})
+        .catch((err) => {
+          expect(err.response.status).toBe(500);
+          done();
+        });
+    });
+    //** Delete user Data
+    it('200 suspended user', (done) => {
+      const id = hat();
+      const body = {
+        state: 'SUSPENDED',
+        delete: 'false',
+      };
+      verifyTokenTests(monica);
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, dataToUpdate, opts, callback) => {
+          callback(false, monica);
+        }
+      );
+      superagent
+        .delete(`http://localhost:3000/api/${id}`)
+        .send(body)
+        .end((err, res) => {
+          expect(res.status).toBe(200);
+          expect(res.body).toEqual(manageTestResponse(monica));
+          done();
+        });
+    });
+    it('500 suspended user', (done) => {
+      const id = hat();
+      const body = {
+        state: 'SUSPENDED',
+        delete: 'false',
+      };
+      verifyTokenTests(monica);
+      spyOn(User, 'findByIdAndUpdate').and.callFake(
+        (id, dataToUpdate, opts, callback) => {
+          callback(true);
+        }
+      );
+      superagent
+        .delete(`http://localhost:3000/api/${id}`)
+        .send(body)
+        .end((err, res) => {
+          expect(res.status).toBe(500);
+          done();
+        });
+    });
+    it('200 deleted user', (done) => {
+      const id = hat();
+      const body = {
+        delete: 'true',
+      };
+      verifyTokenTests(monica);
+      spyOn(User, 'findByIdAndDelete').and.callFake((id, callback) => {
+        callback(false);
+      });
+      superagent
+        .delete(`http://localhost:3000/api/${id}`)
+        .send(body)
+        .end((err, res) => {
+          expect(res.status).toBe(200);
+          expect(res.body).toEqual(
+            manageTestResponse('User deleted correctly')
+          );
+          done();
+        });
+    });
+    it('500 deleted user', (done) => {
+      const id = hat();
+      const body = {
+        delete: 'true',
+      };
+      verifyTokenTests(monica);
+      spyOn(User, 'findByIdAndDelete').and.callFake((id, callback) => {
+        callback(true);
+      });
+      superagent
+        .delete(`http://localhost:3000/api/${id}`)
+        .send(body)
+        .end((err, res) => {
+          expect(res.status).toBe(500);
           done();
         });
     });
